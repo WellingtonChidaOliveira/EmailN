@@ -20,7 +20,7 @@ func TestNewCampaign(t *testing.T) {
 		assert.Equal(campaign.Name, name)
 		assert.Greater(len(campaign.Recipients), 0)
 		assert.Equal(len(campaign.Recipients), len(recipients))
-		assert.Equal(campaign.Recipients[0].Email, recipients[0].Email)
+		assert.Equal(campaign.Recipients[0].Email, recipients[0])
 	})
 
 	t.Run("GenerateId", func(t *testing.T){
@@ -65,7 +65,7 @@ func TestNewCampaign(t *testing.T) {
 		require := require.New(t)
 
 		//act
-		_, err := NewCampaign(name, content, template, []Contact{})
+		_, err := NewCampaign(name, content, template, []string{})
 		
 		//assert
 		require.NotNil(err)
@@ -77,11 +77,7 @@ func TestNewCampaign(t *testing.T) {
 		require := require.New(t)
 
 		//act
-		_, err := NewCampaign(name, content, template, []Contact{
-			{
-				Email: "teste",
-			},
-		})
+		_, err := NewCampaign(name, content, template, []string{"w"})
 		
 		//assert
 		require.NotNil(err)
@@ -93,11 +89,8 @@ func TestNewCampaign(t *testing.T) {
 		require := require.New(t)
 
 		//act
-		_, err := NewCampaign(name, content, template, []Contact{
-			{
-				Email: "",
-			},
-		})
+		_, err := NewCampaign(name, content, template, []string{""})	
+		
 		
 		//assert
 		require.NotNil(err)
@@ -121,11 +114,7 @@ var(
 	name = "Test Campaign"
 	content = "Test Content"
 	template = "Test Template"
-	recipients = []Contact{
-		{
-			Email: "teste@test.com",
-		},
-	}
+	recipients = []string{"teste@test.com"}
 )
 
 func GenerateCampaign() (*Campaign, error) {
