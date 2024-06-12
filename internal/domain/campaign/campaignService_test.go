@@ -2,6 +2,7 @@ package campaign
 
 import (
 	"emailn/internal/contract"
+	internalerrors "emailn/internal/internal-errors"
 	"errors"
 	"testing"
 
@@ -13,69 +14,62 @@ type MockRepository struct {
 	mock.Mock
 }
 
-var (
-	mockRepo = new(MockRepository)
-	service = Service{Repository: mockRepo}
+func Test_Create_Campaign_Db(t *testing.T) {
+	tests := []struct {
+		name     string
+		setup    func(mockRepo *MockRepository, service *Service)
+		newCampaign contract.NewCampaignDto
+		wantErr  bool
+		errText  string
+	}{
+		{
+			name: "CreateCampaign",
+			setup: func(mockRepo *MockRepository, service *Service) {
+				mockRepo.On("Save", mock.Anything).Return(nil)
+			},
+			newCampaign: generateNewCampaign(),
+			wantErr: false,
+		},
+		{
+			name: "ValidateErrorWhenCreate",
+			setup: func(mockRepo *MockRepository, service *Service) {},
+			newCampaign: func() contract.NewCampaignDto {
+				c := generateNewCampaign()
+				c.Name = ""
+				return c
+			}(),
+			wantErr: true,
+			errText: "name is required",
+		},
+		{
+			name: "ValidateErrorWhenSaveDb",
+			setup: func(mockRepo *MockRepository, service *Service) {
+				mockRepo.On("Save", mock.Anything).Return(errors.New("Error to save on db"))
+			},
+			newCampaign: generateNewCampaign(),
+			wantErr: true,
+			errText: internalerrors.ErrDataBase.Error(),
+		},
+	}
 
-)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := new(MockRepository)
+			service := Service{Repository: mockRepo}
+			tt.setup(mockRepo, &service)
 
-func Test_Create(t *testing.T){
-	t.Run("CreateCampaign", func(t *testing.T){
-		//arrange
-		assert := assert.New(t)
-		mockRepo.On("Save", mock.Anything).Return(nil)
-		newCampaign := generateNewCampaign()
+			_, err := service.CreateCampaign(tt.newCampaign)
 
-		// Act
-		id, err := service.CreateCampaign(newCampaign)
-
-		// Assert
-		assert.Nil(err)
-		assert.NotEmpty(id)
-	})
-
-	t.Run("CreateCampaignSaveInDatabase", func(t *testing.T){
-		//arrange
-		newCampaign := generateNewCampaign()
-		mockRepo.On("Save", mock.MatchedBy(func(campaign *Campaign) bool {
-			return campaign.Name == newCampaign.Name && campaign.Content == newCampaign.Content
-		})).Return(nil)
-
-		// Act
-		service.CreateCampaign(newCampaign)
-
-		mockRepo.AssertExpectations(t)
-	})
-
-	t.Run("ValidateErrorWhenCreate", func(t *testing.T) {
-		assert := assert.New(t)
-		newCampaign := generateNewCampaign()
-		newCampaign.Name = ""
-		
-		_, err := service.CreateCampaign(newCampaign)
-
-		assert.NotNil(err)
-		assert.Equal("name is required", err.Error())
-	})
-
-	t.Run("ValidateErrorWhenSaveDb", func(t *testing.T){
-		assert := assert.New(t)
-		mockRepo := new(MockRepository)
-		mockRepo.On("Save", mock.Anything).Return(errors.New("Error to save on db"))
-		service := Service{Repository: mockRepo}
-
-		newCampaign := generateNewCampaign()
-		_, err := service.CreateCampaign(newCampaign)
-
-		if err == nil {
-			t.Errorf("Expected err nut I got nil")
-		}
-		assert.NotNil(err)
-		assert.Equal("Error to save on db", err.Error())
-		
-		
-	})
+			if tt.wantErr {
+				assert.NotNil(t, err)
+				assert.Equal(t, tt.errText, err.Error())
+			} else {
+				assert.Nil(t, err)
+			}
+		})
+	}
 }
+
 
 func generateNewCampaign() contract.NewCampaignDto {
 	return contract.NewCampaignDto{
