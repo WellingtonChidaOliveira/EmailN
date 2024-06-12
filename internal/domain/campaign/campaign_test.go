@@ -8,106 +8,125 @@ import (
 )
 
 func TestNewCampaign(t *testing.T) {
-	t.Run("NewCampaign", func(t *testing.T){
-		assert := assert.New(t)
-		require := require.New(t)
 
-		//act
-		campaign, _  := GenerateCampaign()
+	tests :=[]struct{
+		name string
+		setup func()(*Campaign, error)
+		validate func(campaign *Campaign, err error)
+	}{
+		{
+			name: "NewCampaign",
+			setup: func() (*Campaign, error){
+				return GenerateCampaign()
+			},
+			validate: func(campaign *Campaign, err error){
+				require := require.New(t)
+				assert := assert.New(t)
 
-		//assert
-		require.NotNil(campaign, "NewCampaign should return a non-nil campaign")
-		assert.Equal(campaign.Name, name)
-		assert.Greater(len(campaign.Recipients), 0)
-		assert.Equal(len(campaign.Recipients), len(recipients))
-		assert.Equal(campaign.Recipients[0].Email, recipients[0])
-	})
+				require.NotNil(campaign, "NewCampaign should return a non-nil campaign")
+				assert.Equal(campaign.Name, name)
+				assert.Greater(len(campaign.Recipients), 0)
+				assert.Equal(len(campaign.Recipients), len(recipients))
+				assert.Equal(campaign.Recipients[0].Email, recipients[0])
+			},
+		},
+		{
+			name: "GenerateId",
+			setup: func () (*Campaign, error)  {
+				return GenerateCampaign()
+			},
+			validate: func(campaign *Campaign, err error){
+				require := require.New(t)
+				assert := assert.New(t)
 
-	t.Run("GenerateId", func(t *testing.T){
-		assert := assert.New(t)
-		require := require.New(t)
-		
-		//act
-		campaign, _ := GenerateCampaign()
+				require.NotNil(campaign, "NewCampaign should return a non-nil campaign")
+				assert.NotEmpty(campaign.ID)
+			},
+		},
+		{
+			name: "GenerateCreatedOn",
+			setup: func () (*Campaign, error)  {
+				return GenerateCampaign()
+			},
+			validate: func(campaign *Campaign, err error){
+				require := require.New(t)
+				assert := assert.New(t)
 
-		//assert
-		require.NotNil(campaign, "NewCampaign should return a non-nil campaign")
-		assert.NotEmpty(campaign.ID)
-	})
+				require.NotNil(campaign, "NewCampaign should return a non-nil campaign")
+				assert.NotEmpty(campaign.CreatedOn)
+				assert.Greater(campaign.CreatedOn.Unix(), int64(0))
+			},
+		},
+		{
+			name: "ValidateName",
+			setup: func () (*Campaign, error)  {
+				return NewCampaign("", content, template, recipients)
+			},
+			validate: func(campaign *Campaign, err error){
+				assert := assert.New(t)
 
-	t.Run("GenerateCreatedOn", func(t *testing.T){
-		assert := assert.New(t)
-		require := require.New(t)
-		
-		//act
-		campaign, _ := GenerateCampaign()
-		
+				assert.Equal("name is required", err.Error())
+			},
+		},
+		{
+			name: "ValidateRecipients",
+			setup: func () (*Campaign, error)  {
+				return NewCampaign(name, content, template, []string{})
+			},
+			validate: func(campaign *Campaign, err error){
+				require := require.New(t)
+				assert := assert.New(t)
 
-		//assert
-		require.NotNil(campaign, "NewCampaign should return a non-nil campaign")
-		assert.NotEmpty(campaign.CreatedOn)
-		assert.Greater(campaign.CreatedOn.Unix(), int64(0))
-	})
+				require.NotNil(err)
+				assert.Equal(ErrRecipientsAreRequired, err.Error())
+			},
+		},
+		{
+			name: "ValidateEmail",
+			setup: func () (*Campaign, error)  {
+				return NewCampaign(name, content, template, []string{"w"})
+			},
+			validate: func(campaign *Campaign, err error){
+				require := require.New(t)
+				assert := assert.New(t)
 
-	t.Run("ValidateName", func(t *testing.T){
-		assert := assert.New(t)
-		//require := require.New(t)
+				require.NotNil(err)
+				assert.Equal(ErrInvalidEmail, err.Error())
+			},
+		},
+		{
+			name: "ValidateEmailIsRequired",
+			setup: func () (*Campaign, error)  {
+				return NewCampaign(name, content, template, []string{""})	
+			},
+			validate: func(campaign *Campaign, err error){
+				require := require.New(t)
+				assert := assert.New(t)
 
-		//act
-		_, err := NewCampaign("  ", content, template, recipients)
-		
-		//assert
-		assert.Equal("name is required", err.Error())
-	})
+				require.NotNil(err)
+				assert.Equal(ErrEmailIsRequired, err.Error())
+			},
+		},
+		{
+			name: "ValidateContent",
+			setup: func () (*Campaign, error)  {
+				return NewCampaign(name, "  ", template, recipients)
+			},
+			validate: func(campaign *Campaign, err error){
+				assert := assert.New(t)
 
-	t.Run("ValidateRecipients", func(t *testing.T){
-		assert := assert.New(t)
-		require := require.New(t)
+				assert.Equal("content is required", err.Error())
+			},
+		},
 
-		//act
-		_, err := NewCampaign(name, content, template, []string{})
-		
-		//assert
-		require.NotNil(err)
-		assert.Equal(ErrRecipientsAreRequired, err.Error())
-	})
+	}
 
-	t.Run("ValidateEmail", func(t *testing.T){
-		assert := assert.New(t)
-		require := require.New(t)
-
-		//act
-		_, err := NewCampaign(name, content, template, []string{"w"})
-		
-		//assert
-		require.NotNil(err)
-		assert.Equal(ErrInvalidEmail, err.Error())
-	})
-
-	t.Run("ValidateEmailIsRequired", func(t *testing.T){
-		assert := assert.New(t)
-		require := require.New(t)
-
-		//act
-		_, err := NewCampaign(name, content, template, []string{""})	
-		
-		
-		//assert
-		require.NotNil(err)
-		assert.Equal(ErrEmailIsRequired, err.Error())
-	})
-
-	t.Run("ValidateContent", func(t *testing.T){
-		assert := assert.New(t)
-		//require := require.New(t)
-
-		//act
-		_, err := NewCampaign(name, "  ", template, recipients)
-		
-		//assert
-		assert.Equal("content is required", err.Error())
-	})
-		
+	for _, tt := range tests{
+		t.Run(tt.name, func(t *testing.T){
+			campaign, err := tt.setup()
+			tt.validate(campaign, err)
+		})
+	}
 }
 
 var(
