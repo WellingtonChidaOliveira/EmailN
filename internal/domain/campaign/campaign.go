@@ -30,7 +30,16 @@ type Campaign struct {
 	IsActivated bool
 }
 
-func NewCampaign(name, content, template string, recipients []Contact) (*Campaign, error) {
+func NewCampaign(name, content, template string, recipients []string) (*Campaign, error) {
+
+	if len(recipients) == 0 {
+		return nil, errors.New(ErrRecipientsAreRequired)
+	}
+
+	contacts := make([]Contact, len(recipients))
+	for i, r := range recipients {
+		contacts[i].Email = r
+	}
 
 	if strings.TrimSpace(name) == "" {
 		return nil, errors.New(ErrNameIsRequired)
@@ -38,23 +47,16 @@ func NewCampaign(name, content, template string, recipients []Contact) (*Campaig
 		return nil, errors.New(ErrContentIsRequired)
 	}
 
-	if len(recipients) == 0 {
-		return nil, errors.New(ErrRecipientsAreRequired)
-	}
-
-	for _, r := range recipients {
-		if strings.TrimSpace(r.Email) == "" {
+	for _, c := range contacts {
+		if strings.TrimSpace(c.Email) == "" {
 			return nil, errors.New(ErrEmailIsRequired)
-		} else if !strings.Contains(r.Email, "@") {
+		} else if !strings.Contains(c.Email, "@") {
 			return nil, errors.New(ErrInvalidEmail)
 		}
 	}
 
 
-	contacts := make([]Contact, len(recipients))
-	for i, r := range recipients {
-		contacts[i].Email = r.Email
-	}
+	
 
 	return &Campaign{
 		ID:          xid.New().String(),
