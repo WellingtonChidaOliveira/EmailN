@@ -1,62 +1,40 @@
 package campaign
 
 import (
-	"errors"
-	"strings"
 	"time"
 
 	"github.com/rs/xid"
 )
 
 var (
-	ErrNameIsRequired = "name is required"
-	ErrContentIsRequired = "content is required"
+	ErrNameIsRequired        = "name is required"
+	ErrContentIsRequired     = "content is required"
 	ErrRecipientsAreRequired = "recipients are required"
-	ErrInvalidEmail = "invalid email"
-	ErrEmailIsRequired = "email is required"
+	ErrInvalidEmail          = "invalid email"
+	ErrEmailIsRequired       = "email is required"
 )
+
 type Contact struct {
-	Email string
+	Email string `validate:"email"`
 }
 
 type Campaign struct {
-	ID          string
-	Name        string
-	CreatedOn   time.Time
-	ModifiedOn  time.Time
-	Content     string
-	Recipients  []Contact
+	ID          string    `validate:"required"`
+	Name        string    `validate:"min=5,max=100"`
+	CreatedOn   time.Time `validate:"required"`
+	ModifiedOn  time.Time `validate:"required"`
+	Content     string    `validate:"min=5"`
+	Recipients  []Contact `validate:"min=1"`
 	Template    string
 	IsActivated bool
 }
 
 func NewCampaign(name, content, template string, recipients []string) (*Campaign, error) {
 
-	if len(recipients) == 0 {
-		return nil, errors.New(ErrRecipientsAreRequired)
-	}
-
 	contacts := make([]Contact, len(recipients))
-	for i, r := range recipients {
-		contacts[i].Email = r
+	for _, recipient := range recipients {
+		contacts = append(contacts, Contact{Email: recipient})
 	}
-
-	if strings.TrimSpace(name) == "" {
-		return nil, errors.New(ErrNameIsRequired)
-	} else if strings.TrimSpace(content) == "" {
-		return nil, errors.New(ErrContentIsRequired)
-	}
-
-	for _, c := range contacts {
-		if strings.TrimSpace(c.Email) == "" {
-			return nil, errors.New(ErrEmailIsRequired)
-		} else if !strings.Contains(c.Email, "@") {
-			return nil, errors.New(ErrInvalidEmail)
-		}
-	}
-
-
-	
 
 	return &Campaign{
 		ID:          xid.New().String(),
