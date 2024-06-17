@@ -16,11 +16,11 @@ type MockRepository struct {
 
 func Test_Create_Campaign_Db(t *testing.T) {
 	tests := []struct {
-		name     string
-		setup    func(mockRepo *MockRepository, service *Service)
+		name        string
+		setup       func(mockRepo *MockRepository, service *Service)
 		newCampaign contract.NewCampaignDto
-		wantErr  bool
-		errText  string
+		wantErr     bool
+		errText     string
 	}{
 		{
 			name: "CreateCampaign",
@@ -28,10 +28,10 @@ func Test_Create_Campaign_Db(t *testing.T) {
 				mockRepo.On("Save", mock.Anything).Return(nil)
 			},
 			newCampaign: generateNewCampaign(),
-			wantErr: false,
+			wantErr:     false,
 		},
 		{
-			name: "ValidateErrorWhenCreate",
+			name:  "ValidateErrorWhenCreate",
 			setup: func(mockRepo *MockRepository, service *Service) {},
 			newCampaign: func() contract.NewCampaignDto {
 				c := generateNewCampaign()
@@ -39,7 +39,7 @@ func Test_Create_Campaign_Db(t *testing.T) {
 				return c
 			}(),
 			wantErr: true,
-			errText: "name is required",
+			errText: "Name is required",
 		},
 		{
 			name: "ValidateErrorWhenSaveDb",
@@ -47,8 +47,8 @@ func Test_Create_Campaign_Db(t *testing.T) {
 				mockRepo.On("Save", mock.Anything).Return(errors.New("Error to save on db"))
 			},
 			newCampaign: generateNewCampaign(),
-			wantErr: true,
-			errText: internalerrors.ErrDataBase.Error(),
+			wantErr:     true,
+			errText:     internalerrors.ErrDataBase.Error(),
 		},
 	}
 
@@ -70,15 +70,13 @@ func Test_Create_Campaign_Db(t *testing.T) {
 	}
 }
 
-
 func generateNewCampaign() contract.NewCampaignDto {
 	return contract.NewCampaignDto{
-		Name : name,
+		Name:    name,
 		Content: content,
-		Emails: []string{recipients[0]},
+		Emails:  []string{recipients[0]},
 	}
 }
-
 
 func (m *MockRepository) FindAll() ([]Campaign, error) {
 	args := m.Called()
