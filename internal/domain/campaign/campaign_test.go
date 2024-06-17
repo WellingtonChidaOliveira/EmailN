@@ -9,17 +9,17 @@ import (
 
 func TestNewCampaign(t *testing.T) {
 
-	tests :=[]struct{
-		name string
-		setup func()(*Campaign, error)
+	tests := []struct {
+		name     string
+		setup    func() (*Campaign, error)
 		validate func(campaign *Campaign, err error)
 	}{
 		{
 			name: "NewCampaign",
-			setup: func() (*Campaign, error){
+			setup: func() (*Campaign, error) {
 				return GenerateCampaign()
 			},
-			validate: func(campaign *Campaign, err error){
+			validate: func(campaign *Campaign, err error) {
 				require := require.New(t)
 				assert := assert.New(t)
 
@@ -32,10 +32,10 @@ func TestNewCampaign(t *testing.T) {
 		},
 		{
 			name: "GenerateId",
-			setup: func () (*Campaign, error)  {
+			setup: func() (*Campaign, error) {
 				return GenerateCampaign()
 			},
-			validate: func(campaign *Campaign, err error){
+			validate: func(campaign *Campaign, err error) {
 				require := require.New(t)
 				assert := assert.New(t)
 
@@ -45,10 +45,10 @@ func TestNewCampaign(t *testing.T) {
 		},
 		{
 			name: "GenerateCreatedOn",
-			setup: func () (*Campaign, error)  {
+			setup: func() (*Campaign, error) {
 				return GenerateCampaign()
 			},
-			validate: func(campaign *Campaign, err error){
+			validate: func(campaign *Campaign, err error) {
 				require := require.New(t)
 				assert := assert.New(t)
 
@@ -59,21 +59,21 @@ func TestNewCampaign(t *testing.T) {
 		},
 		{
 			name: "ValidateName",
-			setup: func () (*Campaign, error)  {
+			setup: func() (*Campaign, error) {
 				return NewCampaign("", content, template, recipients)
 			},
-			validate: func(campaign *Campaign, err error){
+			validate: func(campaign *Campaign, err error) {
 				assert := assert.New(t)
 
-				assert.Equal("name is required", err.Error())
+				assert.Equal("Name is required", err.Error())
 			},
 		},
 		{
 			name: "ValidateRecipients",
-			setup: func () (*Campaign, error)  {
-				return NewCampaign(name, content, template, []string{})
+			setup: func() (*Campaign, error) {
+				return NewCampaign(name, content, template, nil)
 			},
-			validate: func(campaign *Campaign, err error){
+			validate: func(campaign *Campaign, err error) {
 				require := require.New(t)
 				assert := assert.New(t)
 
@@ -83,10 +83,10 @@ func TestNewCampaign(t *testing.T) {
 		},
 		{
 			name: "ValidateEmail",
-			setup: func () (*Campaign, error)  {
+			setup: func() (*Campaign, error) {
 				return NewCampaign(name, content, template, []string{"w"})
 			},
-			validate: func(campaign *Campaign, err error){
+			validate: func(campaign *Campaign, err error) {
 				require := require.New(t)
 				assert := assert.New(t)
 
@@ -96,43 +96,42 @@ func TestNewCampaign(t *testing.T) {
 		},
 		{
 			name: "ValidateEmailIsRequired",
-			setup: func () (*Campaign, error)  {
-				return NewCampaign(name, content, template, []string{""})	
+			setup: func() (*Campaign, error) {
+				return NewCampaign(name, content, template, []string{""})
 			},
-			validate: func(campaign *Campaign, err error){
+			validate: func(campaign *Campaign, err error) {
 				require := require.New(t)
 				assert := assert.New(t)
 
 				require.NotNil(err)
-				assert.Equal(ErrEmailIsRequired, err.Error())
+				assert.Equal(ErrInvalidEmail, err.Error())
 			},
 		},
 		{
 			name: "ValidateContent",
-			setup: func () (*Campaign, error)  {
+			setup: func() (*Campaign, error) {
 				return NewCampaign(name, "  ", template, recipients)
 			},
-			validate: func(campaign *Campaign, err error){
+			validate: func(campaign *Campaign, err error) {
 				assert := assert.New(t)
 
-				assert.Equal("content is required", err.Error())
+				assert.Equal("Content is too short", err.Error())
 			},
 		},
-
 	}
 
-	for _, tt := range tests{
-		t.Run(tt.name, func(t *testing.T){
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			campaign, err := tt.setup()
 			tt.validate(campaign, err)
 		})
 	}
 }
 
-var(
-	name = "Test Campaign"
-	content = "Test Content"
-	template = "Test Template"
+var (
+	name       = "Test Campaign"
+	content    = "Test Content"
+	template   = "Test Template"
 	recipients = []string{"teste@test.com"}
 )
 
